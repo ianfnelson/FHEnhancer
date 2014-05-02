@@ -29,12 +29,12 @@ namespace FHEnhancer
             {
                 var pageParts = GetPageParts(pageToModify.FullName);
 
-                var modifiedPage = new PageBuilder().BuildPage(pageParts.Title, pageParts.Content);
+                var modifiedPage = new PageBuilder().BuildPage(pageParts.Title, pageParts.Content, pageToModify.Name);
 
                 File.WriteAllText(Path.Combine(outputDirectory.FullName, pageToModify.Name), modifiedPage);
             }
 
-            var indexPage = new PageBuilder().BuildPage("Nelson Family Tree", "<p>todo</p>");
+            var indexPage = new PageBuilder().BuildPage("Nelson Family Tree", "<p>todo</p>", "index.html");
             File.WriteAllText(Path.Combine(outputDirectory.FullName, "index.html"), indexPage);
         }
 

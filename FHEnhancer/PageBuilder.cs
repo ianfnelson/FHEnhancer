@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 
 namespace FHEnhancer
@@ -6,10 +7,12 @@ namespace FHEnhancer
     public class PageBuilder
     {
         private static readonly string StaticTemplate;
+        private static readonly Uri CanonicalDomain;
 
         static PageBuilder()
         {
             StaticTemplate = BuildStaticTemplate();
+            CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
         }
 
         private static string BuildStaticTemplate()
@@ -27,10 +30,11 @@ namespace FHEnhancer
             return template;
         }
 
-        public string BuildPage(string title, string content)
+        public string BuildPage(string title, string content, string fileName)
         {
             var page = StaticTemplate.Replace("{{TITLE}}", title);
             page = page.Replace("{{CONTENT}}", content);
+            page = page.Replace("{{CANONICAL_URL}}", new Uri(CanonicalDomain, fileName).ToString());
 
             // TODO - advert
 
