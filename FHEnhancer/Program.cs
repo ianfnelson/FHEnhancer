@@ -1,7 +1,7 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
 using System.IO;
 using System.Linq;
+using HtmlAgilityPack;
 
 namespace FHEnhancer
 {
@@ -19,7 +19,7 @@ namespace FHEnhancer
 
         private static void BuildPages(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
         {
-            var searchPatterns = new[] { "toc*.html", "ind*.html", "fam*.html", "_nameindex.html" };
+            var searchPatterns = new[] {"toc*.html", "ind*.html", "fam*.html", "_nameindex.html"};
 
             var pagesToModify =
                 searchPatterns.SelectMany(
@@ -27,11 +27,9 @@ namespace FHEnhancer
 
             foreach (var pageToModify in pagesToModify)
             {
-                var body = File.ReadAllText(pageToModify.FullName);
-                var title = GetPageTitle(body);
-                var content = GetPageContent(body);
+                var pageParts = GetPageParts(pageToModify.FullName);
 
-                var modifiedPage = new PageBuilder().BuildPage(title, content);
+                var modifiedPage = new PageBuilder().BuildPage(pageParts.Title, pageParts.Content);
 
                 File.WriteAllText(Path.Combine(outputDirectory.FullName, pageToModify.Name), modifiedPage);
             }
@@ -39,14 +37,15 @@ namespace FHEnhancer
             // TODO - build index homepage from template.
         }
 
-        private static string GetPageContent(string body)
+        private static PageParts GetPageParts(string path)
         {
-            return null;
-        }
+            var doc = new HtmlDocument();
+            doc.Load(path);
 
-        private static string GetPageTitle(string body)
-        {
-            return null;
+            var title = doc.DocumentNode.SelectSingleNode("/html/head/title").InnerText;
+            var content = doc.DocumentNode.SelectSingleNode("/html/body/div[contains(@class,'fhcontent')]").InnerHtml;
+
+            return new PageParts {Title = title, Content = content};
         }
 
         private static void CopyJpegs(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
@@ -59,7 +58,7 @@ namespace FHEnhancer
 
         private static void CleanOutputDirectory(DirectoryInfo outputDirectory)
         {
-            var searchPatterns = new[] { "*.jpg", "_*.html", "fam*.html", "ind*.html", "toc*.html" };
+            var searchPatterns = new[] {"*.jpg", "_*.html", "fam*.html", "ind*.html", "toc*.html"};
 
             var filesToDelete =
                 searchPatterns.SelectMany(
@@ -69,6 +68,12 @@ namespace FHEnhancer
             {
                 fileToDelete.Delete();
             }
+        }
+
+        public class PageParts
+        {
+            public string Title { get; set; }
+            public string Content { get; set; }
         }
     }
 }
