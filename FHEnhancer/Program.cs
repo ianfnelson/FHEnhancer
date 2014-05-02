@@ -19,7 +19,7 @@ namespace FHEnhancer
 
         private static void BuildPages(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
         {
-            var searchPatterns = new[] {"toc*.html", "ind*.html", "fam*.html", "_nameindex.html"};
+            var searchPatterns = new[] { "ind*.html", "toc*.html", "fam*.html", "_nameindex.html" };
 
             var pagesToModify =
                 searchPatterns.SelectMany(
@@ -34,7 +34,8 @@ namespace FHEnhancer
                 File.WriteAllText(Path.Combine(outputDirectory.FullName, pageToModify.Name), modifiedPage);
             }
 
-            // TODO - build index homepage from template.
+            var indexPage = new PageBuilder().BuildPage("Nelson Family Tree", "<p>todo</p>");
+            File.WriteAllText(Path.Combine(outputDirectory.FullName, "index.html"), indexPage);
         }
 
         private static PageParts GetPageParts(string path)
@@ -42,10 +43,24 @@ namespace FHEnhancer
             var doc = new HtmlDocument();
             doc.Load(path);
 
-            var title = doc.DocumentNode.SelectSingleNode("/html/head/title").InnerText;
-            var content = doc.DocumentNode.SelectSingleNode("/html/body/div[contains(@class,'fhcontent')]").InnerHtml;
+            var contentDiv = doc.DocumentNode.SelectSingleNode("/html/body/div[contains(@class,'fhcontent')]");
 
-            return new PageParts {Title = title, Content = content};
+            var h1Node = contentDiv.SelectSingleNode("h1[contains(@class,'FhHdg1')]");
+            var pageTitleCentredNode = contentDiv.SelectSingleNode("p[contains(@class,'FhPageTitleCentred')]");
+
+            var titleText = (h1Node ?? pageTitleCentredNode ??
+                         doc.DocumentNode.SelectSingleNode("/html/head/title")).InnerText;
+
+            var seeAlsoNode = contentDiv.SelectSingleNode("div[contains(@class,'FhSeeAlso')]");
+
+            foreach (var node in new[] {h1Node, pageTitleCentredNode, seeAlsoNode}.Where(node => node != null))
+            {
+                contentDiv.RemoveChild(node);
+            }
+
+            var content = contentDiv.InnerHtml;
+
+            return new PageParts {Title = titleText, Content = content};
         }
 
         private static void CopyJpegs(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
