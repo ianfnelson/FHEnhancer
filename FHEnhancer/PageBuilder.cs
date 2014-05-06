@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using HtmlAgilityPack;
 
 namespace FHEnhancer
@@ -9,11 +11,26 @@ namespace FHEnhancer
     {
         private static readonly string StaticTemplate;
         private static readonly Uri CanonicalDomain;
+        private static IList<Ad> ads;
+        private static Random rng = new Random(DateTime.Now.Millisecond);
 
         static PageBuilder()
         {
             StaticTemplate = BuildStaticTemplate();
+            ads = BuildAds();
             CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
+        }
+
+        private static IList<Ad> BuildAds()
+        {
+            ads = File.ReadAllLines("./content/ads.txt")
+                .Select(l => l.Split('|'))
+                .Select(x => new Ad {Title = x[0], Href = x[1], FileName = x[2]})
+                .ToList();
+
+            ads.Shuffle();
+
+            return ads;
         }
 
         private static string BuildStaticTemplate()
@@ -68,7 +85,19 @@ namespace FHEnhancer
             page = page.Replace("{{CONTENT}}", content);
             page = page.Replace("{{CANONICAL_URL}}", new Uri(CanonicalDomain, fileName).ToString());
 
-            // TODO - advert
+            page = InsertAd(page);
+
+            return page;
+        }
+
+        private string InsertAd(string page)
+        {
+            var rand = rng.Next(0, ads.Count);
+            var ad = ads[rand];
+
+            page = page.Replace("{{AD_HREF}}", ad.Href);
+            page = page.Replace("{{AD_TITLE}}", ad.Title);
+            page = page.Replace("{{AD_IMG}}", ad.FileName);
 
             return page;
         }
@@ -80,6 +109,15 @@ namespace FHEnhancer
             public string People { get; set; }
 
             public string Pictures { get; set; }
+        }
+
+        public class Ad
+        {
+            public string Title { get; set; }
+
+            public string FileName { get; set; }
+
+            public string Href { get; set; }
         }
     }
 }
