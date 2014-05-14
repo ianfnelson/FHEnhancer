@@ -11,24 +11,22 @@ namespace FHEnhancer
     {
         private static readonly string StaticTemplate;
         private static readonly Uri CanonicalDomain;
-        private static IList<Ad> ads;
-        private static Random rng = new Random(DateTime.Now.Millisecond);
+        private static readonly IList<Ad> Ads;
+        private static readonly Random Rng = new Random(DateTime.Now.Millisecond);
 
         static PageBuilder()
         {
             StaticTemplate = BuildStaticTemplate();
-            ads = BuildAds();
+            Ads = BuildAds();
             CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
         }
 
         private static IList<Ad> BuildAds()
         {
-            ads = File.ReadAllLines("./content/ads.txt")
+            var ads = File.ReadAllLines("./content/ads.txt")
                 .Select(l => l.Split('|'))
                 .Select(x => new Ad {Title = x[0], Href = x[1], FileName = x[2]})
                 .ToList();
-
-            ads.Shuffle();
 
             return ads;
         }
@@ -92,8 +90,8 @@ namespace FHEnhancer
 
         private string InsertAd(string page)
         {
-            var rand = rng.Next(0, ads.Count);
-            var ad = ads[rand];
+            var rand = Rng.Next(0, Ads.Count);
+            var ad = Ads[rand];
 
             page = page.Replace("{{AD_HREF}}", ad.Href);
             page = page.Replace("{{AD_TITLE}}", ad.Title);
