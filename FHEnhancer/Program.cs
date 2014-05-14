@@ -2,7 +2,9 @@
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 
@@ -10,6 +12,11 @@ namespace FHEnhancer
 {
     internal class Program
     {
+        private static readonly string[] PageSearchPatterns =
+        {
+            "ind*.html", "toc*.html", "fam*.html", "_nameindex.html"
+        };
+
         private static void Main(string[] args)
         {
             var sw = new Stopwatch();
@@ -21,25 +28,48 @@ namespace FHEnhancer
             CleanOutputDirectory(outputDirectory);
             CopyJpegs(sourceDirectory, outputDirectory);
             BuildPages(sourceDirectory, outputDirectory);
+            BuildSiteMaps(sourceDirectory, outputDirectory);
 
             sw.Stop();
-            Console.WriteLine("Done - {0} seconds", sw.ElapsedMilliseconds / 1000.0);
-            Console.ReadKey();
+            Console.WriteLine("Done - {0} seconds", sw.ElapsedMilliseconds/1000.0);
+        }
+
+        private static void BuildSiteMaps(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
+        {
+            Console.WriteLine("Building SiteMaps...");
+
+            var pages =
+                PageSearchPatterns.SelectMany(
+                    pat => sourceDirectory.EnumerateFiles(pat, SearchOption.TopDirectoryOnly).Select(x => x.Name));
+
+            var sitemap = new SiteMapBuilder().BuildSiteMap(pages);
+
+            var originalFileName = Path.Combine(outputDirectory.FullName, "sitemap.xml");
+
+            File.WriteAllText(originalFileName, sitemap);
+
+            using (var originalFileStream = File.OpenRead(originalFileName))
+            using (var compressedFileStream = File.Create(originalFileName + ".gz"))
+            using (var compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress))
+            {
+                originalFileStream.CopyTo(compressionStream);
+            }
+
+            Console.WriteLine("...SiteMaps created");
         }
 
         private static void BuildPages(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
         {
             Console.WriteLine("Building Pages...");
 
-            var searchPatterns = new[] {"ind*.html", "toc*.html", "fam*.html", "_nameindex.html"};
-
             var pagesToModify =
-                searchPatterns.SelectMany(
-                    pat => sourceDirectory.EnumerateFileSystemInfos(pat, SearchOption.TopDirectoryOnly));
+                PageSearchPatterns.Except(new[] { "index.html" }).SelectMany(
+                    pat => sourceDirectory.EnumerateFiles(pat, SearchOption.TopDirectoryOnly));
 
             var counter = 0;
 
             var timeSinceMessage = DateTime.Now;
+            var monitor = new object();
 
             Parallel.ForEach(pagesToModify, pageToModify =>
             {
@@ -49,19 +79,23 @@ namespace FHEnhancer
 
                 File.WriteAllText(Path.Combine(outputDirectory.FullName, pageToModify.Name), modifiedPage);
 
-                counter++;
+                Interlocked.Increment(ref counter);
 
-                if ((DateTime.Now - timeSinceMessage).Milliseconds > 500)
+                lock (monitor)
                 {
-                    timeSinceMessage = DateTime.Now;
-                    Console.WriteLine("...{0} pages created", counter);
+                    if ((DateTime.Now - timeSinceMessage).Milliseconds > 500)
+                    {
+                        timeSinceMessage = DateTime.Now;
+                        Console.WriteLine("...{0} pages created", counter);
+                    }
                 }
             });
 
-            Console.WriteLine("...{0} pages created", counter);
-
             var indexPage = new PageBuilder().BuildPage("Nelson Family Tree", "<p>todo</p>", "index.html");
             File.WriteAllText(Path.Combine(outputDirectory.FullName, "index.html"), indexPage);
+            counter++;
+
+            Console.WriteLine("...{0} pages created", counter);
         }
 
         private static PageParts GetPageParts(string path)
@@ -79,14 +113,14 @@ namespace FHEnhancer
 
             var seeAlsoNode = contentDiv.SelectSingleNode("div[contains(@class,'FhSeeAlso')]");
 
-            foreach (var node in new[] {h1Node, pageTitleCentredNode, seeAlsoNode}.Where(node => node != null))
+            foreach (var node in new[] { h1Node, pageTitleCentredNode, seeAlsoNode }.Where(node => node != null))
             {
                 contentDiv.RemoveChild(node);
             }
 
             var content = contentDiv.InnerHtml;
 
-            return new PageParts {Title = titleText, Content = content};
+            return new PageParts { Title = titleText, Content = content };
         }
 
         private static void CopyJpegs(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
@@ -108,7 +142,7 @@ namespace FHEnhancer
         {
             Console.WriteLine("Cleaning output directory...");
 
-            var searchPatterns = new[] {"*.jpg", "_*.html", "fam*.html", "ind*.html", "toc*.html"};
+            var searchPatterns = new[] { "*.jpg", "_*.html", "fam*.html", "ind*.html", "toc*.html" };
 
             var filesToDelete =
                 searchPatterns.SelectMany(
