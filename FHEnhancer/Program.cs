@@ -142,7 +142,7 @@ namespace FHEnhancer
         {
             Console.WriteLine("Cleaning output directory...");
 
-            var searchPatterns = new[] { "*.jpg", "_*.html", "fam*.html", "ind*.html", "toc*.html" };
+            var searchPatterns = new[] { "*.jpg", "_*.html", "fam*.html", "ind*.html", "toc*.html", "sitemap.xml", "sitemap.xml.gz" };
 
             var filesToDelete =
                 searchPatterns.SelectMany(
