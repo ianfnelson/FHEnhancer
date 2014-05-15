@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 
 namespace FHEnhancer
 {
     public class PageBuilder
     {
+        private static readonly Regex DisqusFileNameRegex = new Regex(@"^(fam|ind|toc)\d+.html$", RegexOptions.Compiled);
+        private static readonly string DisqusMarkup;
         private static readonly string StaticTemplate;
         private static readonly Uri CanonicalDomain;
         private static readonly IList<Ad> Ads;
@@ -17,6 +20,7 @@ namespace FHEnhancer
         static PageBuilder()
         {
             StaticTemplate = BuildStaticTemplate();
+            DisqusMarkup = BuildDisqusMarkup();
             Ads = BuildAds();
             CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
         }
@@ -29,6 +33,11 @@ namespace FHEnhancer
                 .ToList();
 
             return ads;
+        }
+
+        private static string BuildDisqusMarkup()
+        {
+            return File.ReadAllText("./content/disqus.html");
         }
 
         private static string BuildStaticTemplate()
@@ -82,6 +91,9 @@ namespace FHEnhancer
             var page = StaticTemplate.Replace("{{TITLE}}", title);
             page = page.Replace("{{CONTENT}}", content);
             page = page.Replace("{{CANONICAL_URL}}", new Uri(CanonicalDomain, fileName).ToString());
+
+            page = page.Replace("{{DISQUS}}", 
+                DisqusFileNameRegex.IsMatch(fileName) ? DisqusMarkup : string.Empty);
 
             page = InsertAd(page);
 
