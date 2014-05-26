@@ -91,7 +91,8 @@ namespace FHEnhancer
                 }
             });
 
-            var indexPage = new PageBuilder().BuildPage("Nelson Family Tree", "<p>todo</p>", "index.html");
+            var homepageContent = File.ReadAllText("./content/homepage.html");
+            var indexPage = new PageBuilder().BuildPage("Family Tree of Ian Nelson and Jocelyn McGhee", homepageContent, "index.html");
             File.WriteAllText(Path.Combine(outputDirectory.FullName, "index.html"), indexPage);
             counter++;
 

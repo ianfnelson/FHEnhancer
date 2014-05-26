@@ -45,12 +45,12 @@
 <body class="post-template">
     <section class="nav" style="background-image: url(/assets/img/bg.jpg)">
         <div class="nav-inner">
-            <h1 class="blog-title"><a href="http://familytree.ianfnelson.com">Nelson Family Tree</a></h1>
+            <h1 class="blog-title"><a href="{{CANONICAL_DOMAIN}}">Nelson Family Tree</a></h1>
             <nav class="links links-page">
                 <ul>
-                    <li><a href="http://familytree.ianfnelson.com/toc2.html">Ancestors Of Ian</a></li>
-                    <li><a href="http://familytree.ianfnelson.com/toc3.html">Ancestors Of Jocelyn</a></li>
-                    <li><a href="http://familytree.ianfnelson.com/_nameindex.html">Index Of Names</a></li>
+                    <li><a href="{{CANONICAL_DOMAIN}}toc2.html">Ancestors Of Ian</a></li>
+                    <li><a href="{{CANONICAL_DOMAIN}}toc3.html">Ancestors Of Jocelyn</a></li>
+                    <li><a href="{{CANONICAL_DOMAIN}}_nameindex.html">Index Of Names</a></li>
                 </ul>
             </nav>
             <nav class="links links-page">
@@ -61,12 +61,15 @@
                 </ul>
             </nav>
             <nav class="links links-page">
-                <p>Compiled by <a href="https://plus.google.com/+IanNelsonuk?rel=author">Ian Nelson</a> 2006-{{CURRENT_YEAR}}.</p>
+                <p>Compiled by <a href="https://plus.google.com/+IanNelsonuk?rel=author">Ian Nelson</a> 2006-{{CURRENT_YEAR}} using <a href="http://amzn.to/1mtZQfe">Family Historian 5</a></p>
                 <p>Last Updated {{LAST_UPDATED}}</p>
+            </nav>
+            <nav class="links links-page">
+                <p><a href="http://blog.iannelson.systems">Ian Nelson Systems Limited</a></p>
             </nav>
             <nav class="ifnamz">
                 <a href="{{AD_HREF}}" rel="nofollow" title="{{AD_TITLE}}">
-                    <img src="http://familytree.ianfnelson.com/assets/img/ads/{{AD_IMG}}" />
+                    <img src="{{CANONICAL_DOMAIN}}assets/img/ads/{{AD_IMG}}" />
                 </a>
             </nav>
         </div>

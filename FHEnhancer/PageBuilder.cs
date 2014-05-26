@@ -19,10 +19,10 @@ namespace FHEnhancer
 
         static PageBuilder()
         {
+            CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
             StaticTemplate = BuildStaticTemplate();
             DisqusMarkup = BuildDisqusMarkup();
             Ads = BuildAds();
-            CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
         }
 
         private static IList<Ad> BuildAds()
@@ -55,6 +55,8 @@ namespace FHEnhancer
             template = template.Replace("{{PAGE_COUNT}}", stats.Pages);
             template = template.Replace("{{PERSON_COUNT}}", stats.People);
             template = template.Replace("{{PICTURE_COUNT}}", stats.Pictures);
+
+            template = template.Replace("{{CANONICAL_DOMAIN}}", CanonicalDomain.ToString());
 
             return template;
         }
@@ -91,6 +93,7 @@ namespace FHEnhancer
             var page = StaticTemplate.Replace("{{TITLE}}", title);
             page = page.Replace("{{CONTENT}}", content);
             page = page.Replace("{{CANONICAL_URL}}", new Uri(CanonicalDomain, fileName).ToString());
+            page = page.Replace("{{CANONICAL_DOMAIN}}", CanonicalDomain.ToString());
 
             page = page.Replace("{{DISQUS}}", 
                 DisqusFileNameRegex.IsMatch(fileName) ? DisqusMarkup : string.Empty);
