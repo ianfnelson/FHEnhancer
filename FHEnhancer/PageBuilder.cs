@@ -21,8 +21,8 @@ namespace FHEnhancer
         {
             CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
             StaticTemplate = BuildStaticTemplate();
-            DisqusMarkup = BuildDisqusMarkup();
-            Ads = BuildAds();
+            //DisqusMarkup = BuildDisqusMarkup();
+            //Ads = BuildAds();
         }
 
         private static IList<Ad> BuildAds()
