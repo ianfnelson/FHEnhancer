@@ -1,43 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 
 namespace FHEnhancer
 {
     public class PageBuilder
     {
-        private static readonly Regex DisqusFileNameRegex = new Regex(@"^(fam|ind|toc)\d+.html$", RegexOptions.Compiled);
-        private static readonly string DisqusMarkup;
         private static readonly string StaticTemplate;
         private static readonly Uri CanonicalDomain;
-        private static readonly IList<Ad> Ads;
-        private static readonly Random Rng = new Random(DateTime.Now.Millisecond);
 
         static PageBuilder()
         {
             CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
             StaticTemplate = BuildStaticTemplate();
-            //DisqusMarkup = BuildDisqusMarkup();
-            //Ads = BuildAds();
-        }
-
-        private static IList<Ad> BuildAds()
-        {
-            var ads = File.ReadAllLines("./content/ads.txt")
-                .Select(l => l.Split('|'))
-                .Select(x => new Ad {Title = x[0], Href = x[1], FileName = x[2]})
-                .ToList();
-
-            return ads;
-        }
-
-        private static string BuildDisqusMarkup()
-        {
-            return File.ReadAllText("./content/disqus.html");
         }
 
         private static string BuildStaticTemplate()
@@ -95,23 +71,6 @@ namespace FHEnhancer
             page = page.Replace("{{CANONICAL_URL}}", new Uri(CanonicalDomain, fileName).ToString());
             page = page.Replace("{{CANONICAL_DOMAIN}}", CanonicalDomain.ToString());
 
-            page = page.Replace("{{DISQUS}}", 
-                DisqusFileNameRegex.IsMatch(fileName) ? DisqusMarkup : string.Empty);
-
-            page = InsertAd(page);
-
-            return page;
-        }
-
-        private string InsertAd(string page)
-        {
-            var rand = Rng.Next(0, Ads.Count);
-            var ad = Ads[rand];
-
-            page = page.Replace("{{AD_HREF}}", ad.Href);
-            page = page.Replace("{{AD_TITLE}}", ad.Title);
-            page = page.Replace("{{AD_IMG}}", ad.FileName);
-
             return page;
         }
 
@@ -122,15 +81,6 @@ namespace FHEnhancer
             public string People { get; set; }
 
             public string Pictures { get; set; }
-        }
-
-        public class Ad
-        {
-            public string Title { get; set; }
-
-            public string FileName { get; set; }
-
-            public string Href { get; set; }
         }
     }
 }
