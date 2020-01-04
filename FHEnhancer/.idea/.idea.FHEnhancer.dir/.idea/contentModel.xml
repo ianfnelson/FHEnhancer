@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\dev\FHEnhancer\FHEnhancer" t="IncludeRecursive">
+      <e p="appsettings.json" t="Include" />
+      <e p="bin" t="ExcludeRecursive" />
+      <e p="content" t="Include">
+        <e p="homepage.html" t="Include" />
+        <e p="template.html" t="Include" />
+      </e>
+      <e p="FHEnhancer.csproj" t="IncludeRecursive" />
+      <e p="obj" t="ExcludeRecursive">
+        <e p="Debug" t="Include">
+          <e p="netcoreapp2.1" t="Include">
+            <e p="FHEnhancer.AssemblyInfo.cs" t="Include" />
+          </e>
+        </e>
+      </e>
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="PageBuilder.cs" t="Include" />
+      <e p="Program.cs" t="Include" />
+      <e p="SiteMapBuilder.cs" t="Include" />
+    </e>
+    <e p="C:\Users\Ian\.Rider2019.3\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\Ian\.Rider2019.3\system\resharper-host\local\Transient\ReSharperHost\v193\SolutionCaches\_.19.00" t="ExcludeRecursive" />
+  </component>
+</project>

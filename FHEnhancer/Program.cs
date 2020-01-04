@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -7,23 +6,30 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 
 namespace FHEnhancer
 {
-    internal class Program
+    class Program
     {
         private static readonly string[] PageSearchPatterns =
         {
             "ind*.html", "toc*.html", "fam*.html", "_nameindex.html"
         };
 
+        private static IConfigurationRoot _configuration;
+
         private static void Main(string[] args)
         {
+            _configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", true, true)
+                .Build();
+            
             var sw = new Stopwatch();
             sw.Start();
 
-            var sourceDirectory = new DirectoryInfo(ConfigurationManager.AppSettings["SourceDirectory"]);
-            var outputDirectory = new DirectoryInfo(ConfigurationManager.AppSettings["DestinationDirectory"]);
+            var sourceDirectory = new DirectoryInfo(_configuration["SourceDirectory"]);
+            var outputDirectory = new DirectoryInfo(_configuration["DestinationDirectory"]);
 
             CleanOutputDirectory(outputDirectory);
             CopyJpegs(sourceDirectory, outputDirectory);
@@ -42,11 +48,12 @@ namespace FHEnhancer
                 PageSearchPatterns.SelectMany(
                     pat => sourceDirectory.EnumerateFiles(pat, SearchOption.TopDirectoryOnly).Select(x => x.Name));
 
-            var sitemap = new SiteMapBuilder().BuildSiteMap(pages);
+            var siteMapBuilder = new SiteMapBuilder(_configuration);
+            var siteMap = siteMapBuilder.BuildSiteMap(pages);
 
             var originalFileName = Path.Combine(outputDirectory.FullName, "sitemap.xml");
 
-            File.WriteAllText(originalFileName, sitemap);
+            File.WriteAllText(originalFileName, siteMap);
 
             using (var originalFileStream = File.OpenRead(originalFileName))
             using (var compressedFileStream = File.Create(originalFileName + ".gz"))
@@ -71,11 +78,13 @@ namespace FHEnhancer
             var timeSinceMessage = DateTime.Now;
             var monitor = new object();
 
+            var pageBuilder = new PageBuilder(_configuration);
+            
             Parallel.ForEach(pagesToModify, pageToModify =>
             {
                 var pageParts = GetPageParts(pageToModify.FullName);
 
-                var modifiedPage = new PageBuilder().BuildPage(pageParts.Title, pageParts.Content, pageToModify.Name);
+                var modifiedPage = pageBuilder.BuildPage(pageParts.Title, pageParts.Content, pageToModify.Name);
 
                 File.WriteAllText(Path.Combine(outputDirectory.FullName, pageToModify.Name), modifiedPage);
 
@@ -92,7 +101,7 @@ namespace FHEnhancer
             });
 
             var homepageContent = File.ReadAllText("./content/homepage.html");
-            var indexPage = new PageBuilder().BuildPage("Family Tree of Ian Nelson and Jocelyn McGhee", homepageContent, "index.html");
+            var indexPage = pageBuilder.BuildPage("Family Tree of Ian Nelson and Jocelyn McGhee", homepageContent, "index.html");
             File.WriteAllText(Path.Combine(outputDirectory.FullName, "index.html"), indexPage);
             counter++;
 

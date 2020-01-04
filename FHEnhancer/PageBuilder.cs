@@ -1,22 +1,24 @@
 ﻿using System;
-using System.Configuration;
 using System.IO;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 
 namespace FHEnhancer
 {
     public class PageBuilder
     {
-        private static readonly string StaticTemplate;
-        private static readonly Uri CanonicalDomain;
+        private readonly string _template;
+        private readonly Uri _canonicalDomain;
+        private readonly string _sourceDirectory;
 
-        static PageBuilder()
+        public PageBuilder(IConfiguration configuration)
         {
-            CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
-            StaticTemplate = BuildStaticTemplate();
+            _sourceDirectory = configuration["SourceDirectory"];
+            _canonicalDomain = new Uri(configuration["CanonicalDomain"]);
+            _template = BuildTemplate();
         }
 
-        private static string BuildStaticTemplate()
+        private string BuildTemplate()
         {
             var template = File.ReadAllText("./content/template.html");
 
@@ -32,17 +34,15 @@ namespace FHEnhancer
             template = template.Replace("{{PERSON_COUNT}}", stats.People);
             template = template.Replace("{{PICTURE_COUNT}}", stats.Pictures);
 
-            template = template.Replace("{{CANONICAL_DOMAIN}}", CanonicalDomain.ToString());
+            template = template.Replace("{{CANONICAL_DOMAIN}}", _canonicalDomain.ToString());
 
             return template;
         }
 
-        private static Stats GetStats()
+        private Stats GetStats()
         {
-            var sourceDir = ConfigurationManager.AppSettings["SourceDirectory"];
-
             var statsDoc = new HtmlDocument();
-            statsDoc.Load(Path.Combine(sourceDir, "_statistics.html"));
+            statsDoc.Load(Path.Combine(_sourceDirectory, "_statistics.html"));
 
             var statsNode = statsDoc.DocumentNode.SelectSingleNode("//div[contains(@class,'FhStatsData')]");
             var pagesRow = statsNode.SelectSingleNode("//table/tr[1]");
@@ -66,10 +66,10 @@ namespace FHEnhancer
 
         public string BuildPage(string title, string content, string fileName)
         {
-            var page = StaticTemplate.Replace("{{TITLE}}", title);
+            var page = _template.Replace("{{TITLE}}", title);
             page = page.Replace("{{CONTENT}}", content);
-            page = page.Replace("{{CANONICAL_URL}}", new Uri(CanonicalDomain, fileName).ToString());
-            page = page.Replace("{{CANONICAL_DOMAIN}}", CanonicalDomain.ToString());
+            page = page.Replace("{{CANONICAL_URL}}", new Uri(_canonicalDomain, fileName).ToString());
+            page = page.Replace("{{CANONICAL_DOMAIN}}", _canonicalDomain.ToString());
 
             return page;
         }

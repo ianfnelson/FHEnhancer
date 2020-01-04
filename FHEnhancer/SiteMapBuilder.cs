@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace FHEnhancer
 {
     public class SiteMapBuilder
     {
-        private static readonly Uri CanonicalDomain = new Uri(ConfigurationManager.AppSettings["CanonicalDomain"]);
-
         private static readonly string lastMod = DateTime.Today.ToString("yyyy-MM-dd");
+        private readonly Uri _canonicalDomain;
 
+        public SiteMapBuilder(IConfiguration configuration)
+        {
+            _canonicalDomain = new Uri(configuration["CanonicalDomain"]);
+        }
+        
         public string BuildSiteMap(IEnumerable<string> pageNames)
         {
             var sb = new StringBuilder();
@@ -33,9 +37,9 @@ namespace FHEnhancer
             return sb.ToString();
         }
 
-        private static SiteMapUrl GetSiteMapUrl(string pageName)
+        private SiteMapUrl GetSiteMapUrl(string pageName)
         {
-            var loc = new Uri(CanonicalDomain, pageName).ToString();
+            var loc = new Uri(_canonicalDomain, pageName).ToString();
 
             var priority = GetPriority(pageName);
             var changeFreq = GetChangeFreq(pageName);
